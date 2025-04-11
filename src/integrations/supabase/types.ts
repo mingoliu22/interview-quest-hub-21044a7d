@@ -62,12 +62,12 @@ export type Database = {
         }
         Insert: {
           assessment_type?: string
-          created_at?: string
+          created_at: string
           created_by: string
           description?: string | null
           id?: string
           title: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           assessment_type?: string
@@ -138,7 +138,7 @@ export type Database = {
           name: string
           position: string | null
           status: string
-          tags: string[] | null
+          tags: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -151,7 +151,7 @@ export type Database = {
           name: string
           position?: string | null
           status: string
-          tags?: string[] | null
+          tags?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -164,7 +164,7 @@ export type Database = {
           name?: string
           position?: string | null
           status?: string
-          tags?: string[] | null
+          tags?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -265,9 +265,9 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "interview_exams_exam_id_fkey"
-            columns: ["exam_id"]
-            isOneToOne: false
+            foreignKeyName: "interview_exams_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
             referencedRelation: "exam_bank"
             referencedColumns: ["id"]
           },
@@ -351,13 +351,6 @@ export type Database = {
             referencedRelation: "candidates"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "interviews_interviewer_id_fkey"
-            columns: ["interviewer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       jobs: {
@@ -380,18 +373,18 @@ export type Database = {
         Insert: {
           benefits?: string | null
           company: string
-          created_at?: string
+          created_at: string
           created_by: string
           deadline?: string | null
           description: string
           id?: string
-          is_active?: boolean
+          is_active: boolean
           location: string
           requirements?: string | null
           salary?: string | null
           title: string
           type: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           benefits?: string | null
