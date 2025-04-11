@@ -47,6 +47,8 @@ type JobInsert = {
   benefits?: string;
   deadline?: string;
   is_active: boolean;
+  created_at: string; // Added required fields
+  updated_at: string; // Added required fields
 };
 
 interface JobFormProps {
@@ -90,6 +92,8 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         throw new Error("User not authenticated");
       }
 
+      const now = new Date().toISOString();
+
       // Create a properly typed object for Supabase insert
       const jobData: JobInsert = {
         title: values.title,
@@ -99,6 +103,8 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         description: values.description,
         created_by: userId,
         is_active: values.is_active,
+        created_at: now,
+        updated_at: now
       };
       
       // Add optional fields only if they exist
@@ -133,6 +139,8 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         throw new Error("Job not found");
       }
 
+      const now = new Date().toISOString();
+
       // Create a properly typed object for Supabase update
       const updateData: Partial<JobInsert> = {
         title: values.title,
@@ -141,6 +149,7 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         type: values.type,
         description: values.description,
         is_active: values.is_active,
+        updated_at: now
       };
       
       // Add optional fields only if they exist
