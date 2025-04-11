@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { UploadCloud, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface ApplicationFormProps {
   jobId: string;
@@ -16,7 +16,6 @@ interface ApplicationFormProps {
 const ApplicationForm = ({ jobId, jobTitle }: ApplicationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,9 +24,7 @@ const ApplicationForm = ({ jobId, jobTitle }: ApplicationFormProps) => {
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
-      toast({
-        description: "We've received your application for " + jobTitle,
-      });
+      toast(`We've received your application for ${jobTitle}`);
     }, 1500);
   };
 
