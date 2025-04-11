@@ -6,9 +6,10 @@ import { Video } from "lucide-react";
 
 interface EmptyInterviewStateProps {
   onStart: () => void;
+  onSuccess?: () => void; // Added onSuccess as optional prop
 }
 
-export const EmptyInterviewState: React.FC<EmptyInterviewStateProps> = ({ onStart }) => {
+export const EmptyInterviewState: React.FC<EmptyInterviewStateProps> = ({ onStart, onSuccess }) => {
   return (
     <Card>
       <CardHeader>

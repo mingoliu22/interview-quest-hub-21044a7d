@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { UploadCloud, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ApplicationFormProps {
   jobId: string;
@@ -27,9 +26,7 @@ const ApplicationForm = ({ jobId, jobTitle }: ApplicationFormProps) => {
     setTimeout(() => {
       setIsSubmitting(false);
       toast({
-        title: "Application Submitted",
         description: "We've received your application for " + jobTitle,
-        variant: "default",
       });
     }, 1500);
   };

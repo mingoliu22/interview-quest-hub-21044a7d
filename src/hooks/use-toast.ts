@@ -1,11 +1,11 @@
 
 // This file is a wrapper around the shadcn toast component
 // Re-exporting from here allows us to maintain consistent toast usage
-import { type ToastActionElement, type ToastProps } from "@/components/ui/toast";
+import { type ToastActionElement as UIToastActionElement, type ToastProps as UIToastProps } from "@/components/ui/toast";
 import { toast as toastOriginal } from "sonner";
 
-export type ToastProps = ToastProps;
-export type ToastActionElement = ToastActionElement;
+export type ToastProps = UIToastProps;
+export type ToastActionElement = UIToastActionElement;
 
 // Create a simple useToast hook that returns toast functions
 export const useToast = () => {
