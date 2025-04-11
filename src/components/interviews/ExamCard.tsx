@@ -54,7 +54,15 @@ export const ExamCard = ({ selectedExam }: ExamCardProps) => {
       </CardHeader>
       
       <CardContent className="flex-grow overflow-hidden flex flex-col">
-        <AIChat selectedExam={selectedExam} />
+        <AIChat 
+          interviewId={selectedExam.id}
+          candidateName=""
+          position=""
+          settings={{
+            interview_type: selectedExam.category.toLowerCase(),
+            experience_level: selectedExam.difficulty.toLowerCase()
+          }}
+        />
       </CardContent>
     </Card>
   );

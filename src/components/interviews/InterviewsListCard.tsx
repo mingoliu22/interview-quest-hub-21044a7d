@@ -35,9 +35,8 @@ export const InterviewsListCard = ({
           </div>
         ) : interviews.length === 0 ? (
           <EmptyInterviewState 
-            candidates={candidates}
-            interviewers={interviewers}
             onSuccess={onRefresh}
+            onStart={() => {}}
           />
         ) : (
           <InterviewsTable 
