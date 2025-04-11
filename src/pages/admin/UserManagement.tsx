@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,56 +30,23 @@ const UserManagement = () => {
     try {
       setLoading(true);
       
-      // Query profiles directly from Supabase instead of using Edge Function
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("*");
+      // Use the Edge Function to get users with display names
+      const { data, error } = await supabase.functions.invoke('get-users-with-display-names');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw error;
+      }
       
-      if (!profiles || profiles.length === 0) {
-        console.log("No profiles found");
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.log("No users data returned from edge function");
         setUsers([]);
         setLoading(false);
         return;
       }
       
-      console.log("Profiles fetched:", profiles);
-      
-      // Create EnhancedProfile objects from the profiles data
-      const enhancedProfiles: EnhancedProfile[] = profiles.map(profile => ({
-        id: profile.id,
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        role: profile.role,
-        email: "", // We'll update this with auth data if possible
-        approved: profile.approved,
-        display_name: profile.first_name && profile.last_name 
-          ? `${profile.first_name} ${profile.last_name}` 
-          : "Unknown User"
-      }));
-      
-      try {
-        // If the current user is admin, we can try to get email information
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (authError) {
-          console.warn("Could not fetch auth users:", authError);
-        } else if (authUsers) {
-          // Map emails from auth users to enhanced profiles based on ID
-          enhancedProfiles.forEach(profile => {
-            const authUser = authUsers.users.find(user => user.id === profile.id);
-            if (authUser) {
-              profile.email = authUser.email || "";
-            }
-          });
-        }
-      } catch (authError) {
-        console.warn("Error fetching auth users:", authError);
-        // Continue with profiles even if we can't get emails
-      }
-      
-      setUsers(enhancedProfiles);
+      console.log("Users data from edge function:", data);
+      setUsers(data as EnhancedProfile[]);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast.error(error.message || "Failed to load users");

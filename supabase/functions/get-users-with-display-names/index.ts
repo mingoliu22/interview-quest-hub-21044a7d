@@ -16,52 +16,49 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    console.log("Fetching profiles from database...");
+    
     // Fetch all profiles first
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('*');
     
     if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
       throw profilesError;
     }
+    
+    console.log(`Fetched ${profiles.length} profiles successfully`);
 
-    // For each profile, get the auth user data to get the display name
-    const enhancedProfiles = await Promise.all(
-      profiles.map(async (profile) => {
-        // Get user data directly from auth.users using admin API
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profile.id);
-        
-        if (userError || !userData.user) {
-          console.error(`Error fetching auth user ${profile.id}:`, userError);
-          return {
-            ...profile,
-            email: 'unknown@example.com',
-            display_name: profile.first_name 
-              ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
-              : 'Unknown User'
-          };
-        }
-        
-        // Explicitly prioritize getting display name from user metadata
-        const user = userData.user;
-        const display_name = 
-          user.user_metadata?.display_name || 
-          user.user_metadata?.name || 
-          user.user_metadata?.full_name;
-        
-        console.log(`User ${profile.id} metadata:`, user.user_metadata);
-        console.log(`Display name extracted:`, display_name);
-        
-        return {
-          ...profile,
-          email: user.email || 'unknown@example.com',
-          display_name: display_name || 
-            (profile.first_name 
-              ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
-              : 'Unknown User')
-        };
-      })
-    );
+    // Fetch all auth users to get emails
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error("Error fetching auth users:", authError);
+      throw authError;
+    }
+
+    const users = authData?.users || [];
+    console.log(`Fetched ${users.length} auth users successfully`);
+
+    // Map profiles with emails
+    const enhancedProfiles = profiles.map(profile => {
+      const user = users.find(u => u.id === profile.id);
+      
+      return {
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        role: profile.role,
+        email: user?.email || '',
+        approved: profile.approved,
+        display_name: profile.first_name && profile.last_name 
+          ? `${profile.first_name} ${profile.last_name}`.trim() 
+          : user?.email || 'Unknown User'
+      };
+    });
+
+    console.log(`Successfully created ${enhancedProfiles.length} enhanced profiles`);
 
     return new Response(JSON.stringify(enhancedProfiles), {
       headers: {
@@ -71,6 +68,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error in edge function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: {
         ...corsHeaders,
