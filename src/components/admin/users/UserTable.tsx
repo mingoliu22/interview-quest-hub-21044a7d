@@ -45,6 +45,10 @@ const UserTable: React.FC<UserTableProps> = ({
   if (loading) {
     return <div className="text-center py-8">Loading users...</div>;
   }
+  
+  if (!users || users.length === 0) {
+    return <div className="text-center py-8">No users found.</div>;
+  }
 
   return (
     <Table>
