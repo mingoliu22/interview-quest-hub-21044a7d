@@ -306,6 +306,39 @@ export type Database = {
           },
         ]
       }
+      interviewers: {
+        Row: {
+          availability: string | null
+          bio: string | null
+          created_at: string | null
+          experience_years: number | null
+          hourly_rate: number | null
+          id: string
+          specialization: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id: string
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       interviews: {
         Row: {
           candidate_id: string | null

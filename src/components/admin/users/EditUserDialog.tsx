@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { UserRole } from "@/types/auth";
 import { EnhancedProfile } from "./UserTable";
+import { syncInterviewers } from "@/utils/syncInterviewers";
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -35,6 +36,29 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
   onSave,
   setEditingUser,
 }) => {
+  const [prevRole, setPrevRole] = React.useState<UserRole | null>(null);
+  const [prevApproved, setPrevApproved] = React.useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setPrevRole(user.role);
+      setPrevApproved(user.approved);
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    onSave();
+    
+    // Check if this user was changed to an approved interviewer
+    if (user && 
+        user.role === 'interviewer' && 
+        user.approved && 
+        (prevRole !== 'interviewer' || !prevApproved)) {
+      // This user became an approved interviewer, sync to interviewers table
+      await syncInterviewers();
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -80,6 +104,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="hr">HR Professional</SelectItem>
+                <SelectItem value="interviewer">Interviewer</SelectItem>
                 <SelectItem value="job_seeker">Job Seeker</SelectItem>
               </SelectContent>
             </Select>
@@ -94,7 +119,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={onSave}>Save Changes</Button>
+          <Button onClick={handleSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
