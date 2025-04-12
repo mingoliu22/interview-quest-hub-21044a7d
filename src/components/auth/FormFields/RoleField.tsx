@@ -33,6 +33,7 @@ const RoleField = ({ form, setSelectedRole }: RoleFieldProps) => {
             <SelectContent>
               <SelectItem value="job_seeker">Job Seeker</SelectItem>
               <SelectItem value="hr">HR Professional</SelectItem>
+              <SelectItem value="interviewer">Interviewer</SelectItem>
               <SelectItem value="admin">System Administrator</SelectItem>
             </SelectContent>
           </Select>

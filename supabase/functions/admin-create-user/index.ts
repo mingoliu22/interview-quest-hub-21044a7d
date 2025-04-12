@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -28,7 +27,15 @@ serve(async (req) => {
 
     console.log("Creating user with data:", { email, firstName, lastName, role, approved, displayName });
     
-    // Create user with admin privileges
+    // Validate role to be one of the allowed values
+    const allowedRoles = ['admin', 'hr', 'job_seeker', 'interviewer'];
+    if (!allowedRoles.includes(role)) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
     const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email,
       password,

@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -110,6 +109,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="hr">HR Professional</SelectItem>
+                <SelectItem value="interviewer">Interviewer</SelectItem>
                 <SelectItem value="job_seeker">Job Seeker</SelectItem>
               </SelectContent>
             </Select>
