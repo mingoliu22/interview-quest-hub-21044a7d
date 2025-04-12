@@ -2,6 +2,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InterviewsTable } from "./InterviewsTable";
 import { EmptyInterviewState } from "./EmptyInterviewState";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { InterviewFormDialog } from "./InterviewFormDialog";
 
 interface InterviewsListCardProps {
   isLoading: boolean;
@@ -20,6 +23,18 @@ export const InterviewsListCard = ({
   exams,
   onRefresh,
 }: InterviewsListCardProps) => {
+  const { isAdmin, isHR } = useAuth();
+
+  const handleStartInterview = () => {
+    if (isAdmin() || isHR()) {
+      // For admin/HR, use the InterviewFormDialog component through the parent
+      toast.info("Use the 'Schedule Interview' button at the top of the page");
+    } else {
+      // For job seekers and interviewers, navigate to preparation
+      toast.info("Prepare for your interview");
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -36,7 +51,7 @@ export const InterviewsListCard = ({
         ) : interviews.length === 0 ? (
           <EmptyInterviewState 
             onSuccess={onRefresh}
-            onStart={() => {}}
+            onStart={handleStartInterview}
           />
         ) : (
           <InterviewsTable 

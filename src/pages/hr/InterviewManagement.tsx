@@ -29,13 +29,12 @@ const InterviewManagement = () => {
 
       if (jobsError) throw jobsError;
 
-      // Fetch interviews with proper relationships and settings
+      // Fetch interviews - fixed to avoid joining with interviewer_id directly
       const { data: interviewsData, error: interviewsError } = await supabase
         .from("interviews")
         .select(`
           *,
-          candidates:candidate_id (id, name, email, user_id),
-          profiles:interviewer_id (id, first_name, last_name)
+          candidates:candidate_id (id, name, email, user_id)
         `)
         .order("date", { ascending: false });
 
@@ -102,11 +101,11 @@ const InterviewManagement = () => {
         });
       }
 
-      // Fetch potential interviewers (HR and admin users)
+      // Fetch potential interviewers (HR, admin and interviewer users)
       const { data: interviewerProfiles, error: interviewerProfilesError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, role")
-        .or("role.eq.hr,role.eq.admin")
+        .or("role.eq.hr,role.eq.admin,role.eq.interviewer")
         .eq("approved", true);
 
       if (interviewerProfilesError) {
@@ -138,7 +137,9 @@ const InterviewManagement = () => {
       // Format the interviews data with proper relationship handling
       const formattedInterviews: Interview[] = (interviewsData || []).map((interview: any) => {
         const candidate = interview.candidates;
-        const interviewer = interview.profiles;
+        
+        // Find interviewer based on interviewer_id instead of trying to use a join
+        const interviewer = interviewerProfiles?.find(p => p.id === interview.interviewer_id);
         
         return {
           id: interview.id,
