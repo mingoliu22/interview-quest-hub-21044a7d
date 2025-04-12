@@ -113,7 +113,8 @@ export const InterviewFormDialog = ({
           position: data.position,
           date: formattedDate,
           status: 'Scheduled',
-          settings: interviewSettings // Add the settings as a JSONB field
+          settings: interviewSettings, // Add the settings as a JSONB field
+          user_id: selectedCandidate?.user_id // Add the user_id to link to the auth user
         })
         .select();
 

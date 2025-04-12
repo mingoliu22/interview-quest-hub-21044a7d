@@ -41,9 +41,24 @@ serve(async (req) => {
     const users = authData?.users || [];
     console.log(`Fetched ${users.length} auth users successfully`);
 
+    // Also fetch candidates table for additional information
+    const { data: candidates, error: candidatesError } = await supabase
+      .from('candidates')
+      .select('*');
+    
+    if (candidatesError) {
+      console.error("Error fetching candidates:", candidatesError);
+      // Continue even if there's an error, as we can still return profiles and auth data
+    }
+    
+    console.log(`Fetched ${candidates?.length || 0} candidates successfully`);
+
     // Map profiles with emails
     const enhancedProfiles = profiles.map(profile => {
       const user = users.find(u => u.id === profile.id);
+      
+      // Look for matching candidate
+      const candidate = candidates?.find(c => c.user_id === profile.id);
       
       return {
         id: profile.id,
@@ -52,6 +67,8 @@ serve(async (req) => {
         role: profile.role,
         email: user?.email || '',
         approved: profile.approved,
+        candidate_id: candidate?.id || null,
+        candidate_status: candidate?.status || null,
         display_name: profile.first_name && profile.last_name 
           ? `${profile.first_name} ${profile.last_name}`.trim() 
           : user?.email || 'Unknown User'

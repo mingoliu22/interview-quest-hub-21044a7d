@@ -41,85 +41,90 @@ const InterviewManagement = () => {
 
       if (interviewsError) throw interviewsError;
 
-      // Strategy for job seekers
-      // 1. Get candidates table data (legacy approach)
-      const { data: candidatesData, error: candidatesError } = await supabase
-        .from("candidates")
-        .select("id, name, email, user_id");
-
-      if (candidatesError) {
-        console.error("Error fetching candidates:", candidatesError);
-      }
-
-      // 2. Get profiles with job_seeker role
-      const { data: jobSeekerProfiles, error: profilesError } = await supabase
+      // Fetch all job seekers directly from profiles table
+      const { data: jobSeekerProfiles, error: jobSeekerProfilesError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, role")
         .eq("role", "job_seeker");
 
-      if (profilesError) {
-        console.error("Error fetching job seeker profiles:", profilesError);
+      if (jobSeekerProfilesError) {
+        console.error("Error fetching job seeker profiles:", jobSeekerProfilesError);
       }
 
-      // Combine both sources
+      // Fetch emails for job seekers
+      const { data: authData } = await supabase.functions.invoke('get-users-with-display-names');
+      const usersWithEmails = authData || [];
+
+      // Create candidates from job seeker profiles
       const allCandidates: Candidate[] = [];
       
-      // Add candidates from candidates table
-      if (candidatesData) {
-        candidatesData.forEach(candidate => {
-          // If the candidate has a user_id, find matching profile
-          const profile = candidate.user_id && jobSeekerProfiles ? 
-            jobSeekerProfiles.find(p => p.id === candidate.user_id) : null;
+      if (jobSeekerProfiles) {
+        jobSeekerProfiles.forEach(profile => {
+          // Find the email for this user from the users data
+          const userWithEmail = usersWithEmails.find(u => u.id === profile.id);
           
           allCandidates.push({
-            id: candidate.id,
-            name: candidate.name,
-            email: candidate.email,
-            user_id: candidate.user_id,
-            first_name: profile?.first_name || null,
-            last_name: profile?.last_name || null
+            id: profile.id,
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unnamed',
+            email: userWithEmail?.email || '',
+            user_id: profile.id,
+            first_name: profile.first_name,
+            last_name: profile.last_name
           });
         });
       }
-      
-      // Add job seekers that might not have a candidate record
-      if (jobSeekerProfiles) {
-        jobSeekerProfiles.forEach(profile => {
-          // Check if this profile is already included via candidates table
-          const existingCandidate = allCandidates.find(c => c.user_id === profile.id);
+
+      // Also fetch legacy candidates table for backward compatibility
+      const { data: candidatesData, error: candidatesError } = await supabase
+        .from("candidates")
+        .select("id, name, email, user_id");
+
+      if (!candidatesError && candidatesData) {
+        // Add legacy candidates that are not already in the profiles-based candidates list
+        candidatesData.forEach(candidate => {
+          const existingCandidate = allCandidates.find(c => 
+            c.id === candidate.id || c.user_id === candidate.user_id
+          );
           
-          if (!existingCandidate) {
-            // Need to create a new candidate record for this job seeker
+          if (!existingCandidate && candidate.user_id) {
+            // If this candidate has a user_id, find the corresponding profile and email
+            const userWithEmail = usersWithEmails.find(u => u.id === candidate.user_id);
+            
             allCandidates.push({
-              id: profile.id, // Use profile ID temporarily
-              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unnamed',
-              email: '', // We don't have email from profiles table
-              user_id: profile.id,
-              first_name: profile.first_name,
-              last_name: profile.last_name
+              id: candidate.id,
+              name: candidate.name,
+              email: candidate.email || userWithEmail?.email || '',
+              user_id: candidate.user_id,
+              first_name: null,
+              last_name: null
             });
           }
         });
       }
 
       // Fetch potential interviewers (HR and admin users)
-      const { data: interviewersData, error: interviewersError } = await supabase
+      const { data: interviewerProfiles, error: interviewerProfilesError } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name")
+        .select("id, first_name, last_name, role")
         .or("role.eq.hr,role.eq.admin")
         .eq("approved", true);
 
-      if (interviewersError) {
-        console.error("Error fetching interviewers:", interviewersError);
+      if (interviewerProfilesError) {
+        console.error("Error fetching interviewer profiles:", interviewerProfilesError);
         setInterviewers([]);
       } else {
-        const formattedInterviewers: Interviewer[] = (interviewersData || []).map(interviewer => ({
-          id: interviewer.id,
-          first_name: interviewer.first_name,
-          last_name: interviewer.last_name,
-          email: "", // Since profiles doesn't have email, we provide an empty string
-          name: `${interviewer.first_name || ''} ${interviewer.last_name || ''}`.trim() || "Unnamed Interviewer"
-        }));
+        const formattedInterviewers: Interviewer[] = (interviewerProfiles || []).map(profile => {
+          // Find the email for this user from the users data
+          const userWithEmail = usersWithEmails.find(u => u.id === profile.id);
+          
+          return {
+            id: profile.id,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email: userWithEmail?.email || "",
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Unnamed Interviewer"
+          };
+        });
         setInterviewers(formattedInterviewers);
       }
 
@@ -155,11 +160,44 @@ const InterviewManagement = () => {
       setInterviews(formattedInterviews);
       setCandidates(allCandidates);
       setExams(examsData || []);
+      
+      // Attempt to synchronize candidates with job seeker profiles
+      await syncCandidatesWithProfiles(allCandidates, usersWithEmails);
+      
     } catch (error: any) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load interview data");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Function to synchronize candidates with profiles
+  const syncCandidatesWithProfiles = async (candidatesList: Candidate[], usersWithEmails: any[]) => {
+    try {
+      for (const user of usersWithEmails) {
+        if (user.role === 'job_seeker') {
+          // Check if this job seeker exists in candidates table
+          const { data: existingCandidate } = await supabase
+            .from('candidates')
+            .select('id, user_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!existingCandidate) {
+            // Create a candidate record for this job seeker
+            await supabase.from('candidates').insert({
+              name: user.display_name,
+              email: user.email,
+              user_id: user.id,
+              status: 'Active'
+            });
+            console.log(`Created candidate record for job seeker: ${user.display_name}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error synchronizing candidates:', error);
     }
   };
 
