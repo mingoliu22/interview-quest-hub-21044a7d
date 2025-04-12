@@ -73,10 +73,12 @@ const UserTable: React.FC<UserTableProps> = ({
                   ${user.role === 'admin' ? 'bg-red-100 text-red-800' : ''} 
                   ${user.role === 'hr' ? 'bg-blue-100 text-blue-800' : ''} 
                   ${user.role === 'job_seeker' ? 'bg-green-100 text-green-800' : ''}
+                  ${user.role === 'interviewer' ? 'bg-purple-100 text-purple-800' : ''}
                 `}
               >
                 {user.role === 'admin' ? 'Administrator' : 
                  user.role === 'hr' ? 'HR Professional' : 
+                 user.role === 'interviewer' ? 'Interviewer' :
                  'Job Seeker'}
               </Badge>
             </TableCell>
