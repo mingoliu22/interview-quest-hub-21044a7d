@@ -48,16 +48,16 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         last_name: data.last_name,
         bio: data.bio,
         avatar_url: data.avatar_url,
-        role: data.role || 'job_seeker',
+        role: data.role as UserRole,
         approved: data.approved,
         resume_url: data.resume_url
       };
       
       setProfile(profileData);
-      setUserRole(data.role || 'job_seeker');
+      setUserRole(data.role as UserRole);
       
       // Log role for debugging
-      console.log("User role set to:", data.role || 'job_seeker');
+      console.log("User role set to:", data.role);
       console.log("Approval status:", data.approved);
     } catch (error) {
       console.error("Error fetching profile:", error);
