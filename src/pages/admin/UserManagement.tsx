@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +8,6 @@ import EditUserDialog from "@/components/admin/users/EditUserDialog";
 import DeleteUserDialog from "@/components/admin/users/DeleteUserDialog";
 import AddUserDialog from "@/components/admin/users/AddUserDialog";
 import { UserRole } from "@/types/auth";
-import { syncInterviewers } from "@/utils/syncInterviewers";
-import { RefreshCcw } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<EnhancedProfile[]>([]);
@@ -19,7 +16,6 @@ const UserManagement = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState<boolean>(false);
-  const [syncingInterviewers, setSyncingInterviewers] = useState<boolean>(false);
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -153,31 +149,12 @@ const UserManagement = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSyncInterviewers = async () => {
-    setSyncingInterviewers(true);
-    try {
-      await syncInterviewers();
-      // Refresh the user list after syncing
-      fetchUsers();
-    } finally {
-      setSyncingInterviewers(false);
-    }
-  };
-
   return (
     <AdminLayout>
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">User Management</h1>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleSyncInterviewers} 
-              disabled={syncingInterviewers}
-            >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              {syncingInterviewers ? "Syncing..." : "Sync Interviewers (Manual)"}
-            </Button>
             <Button onClick={() => setIsAddUserDialogOpen(true)}>Add User</Button>
           </div>
         </div>

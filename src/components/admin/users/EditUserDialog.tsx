@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import {
   Dialog,
@@ -19,7 +18,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { UserRole } from "@/types/auth";
 import { EnhancedProfile } from "./UserTable";
-import { syncInterviewers } from "@/utils/syncInterviewers";
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -46,17 +44,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
     }
   }, [user]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     onSave();
-    
-    // Check if this user was changed to an approved interviewer
-    if (user && 
-        user.role === 'interviewer' && 
-        user.approved && 
-        (prevRole !== 'interviewer' || !prevApproved)) {
-      // This user became an approved interviewer, sync to interviewers table
-      await syncInterviewers();
-    }
   };
 
   if (!user) return null;
