@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, Calendar as CalendarIcon2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -43,7 +44,7 @@ interface InterviewFormValues {
   position: string;
   date: Date;
   interviewer_id?: string;
-  // New fields
+  // Advanced settings
   ai_technical_test: boolean;
   personality_test: boolean;
   interview_mode: string;
@@ -113,8 +114,8 @@ export const InterviewFormDialog = ({
           position: data.position,
           date: formattedDate,
           status: 'Scheduled',
-          settings: interviewSettings, // Add the settings as a JSONB field
-          user_id: selectedCandidate?.user_id // Add the user_id to link to the auth user
+          settings: interviewSettings,
+          user_id: selectedCandidate?.user_id
         })
         .select();
 
@@ -132,11 +133,47 @@ export const InterviewFormDialog = ({
     }
   };
 
+  // Quick schedule function - skip tabs and use defaults
+  const quickSchedule = async () => {
+    const basicData = form.getValues();
+    
+    // Validate basic fields
+    if (!basicData.candidate_id || !basicData.position) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Use default values for all advanced settings
+      const completeData = {
+        ...basicData,
+        ai_technical_test: false,
+        personality_test: false,
+        interview_mode: 'video',
+        experience_level: 'mid',
+        interview_type: 'technical',
+        environment: 'office',
+        lighting: 'day',
+        notes: '',
+      };
+      
+      await onSubmit(completeData);
+      
+    } catch (error) {
+      console.error("Error in quick schedule:", error);
+      toast.error("Failed to schedule interview");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <CalendarIcon2 className="mr-2 h-4 w-4" />
           Schedule Interview
         </Button>
       </DialogTrigger>
@@ -277,6 +314,19 @@ export const InterviewFormDialog = ({
                     </FormItem>
                   )}
                 />
+
+                <div className="pt-2">
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={quickSchedule}
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> 
+                    Quick Schedule (Use Defaults)
+                  </Button>
+                </div>
               </TabsContent>
               
               <TabsContent value="tests" className="space-y-4">

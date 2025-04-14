@@ -162,7 +162,7 @@ const InterviewManagement = () => {
       setCandidates(allCandidates);
       setExams(examsData || []);
       
-      // Attempt to synchronize candidates with job seeker profiles
+      // Synchronize candidates with job seeker profiles automatically
       await syncCandidatesWithProfiles(allCandidates, usersWithEmails);
       
     } catch (error: any) {
