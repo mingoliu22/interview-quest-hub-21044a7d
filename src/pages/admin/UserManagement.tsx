@@ -176,7 +176,7 @@ const UserManagement = () => {
               disabled={syncingInterviewers}
             >
               <RefreshCcw className="mr-2 h-4 w-4" />
-              {syncingInterviewers ? "Syncing..." : "Sync Interviewers"}
+              {syncingInterviewers ? "Syncing..." : "Sync Interviewers (Manual)"}
             </Button>
             <Button onClick={() => setIsAddUserDialogOpen(true)}>Add User</Button>
           </div>

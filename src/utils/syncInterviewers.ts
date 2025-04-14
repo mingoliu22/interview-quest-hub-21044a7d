@@ -2,6 +2,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+/**
+ * Manual sync function to force synchronization of interviewer data.
+ * This can be used if automatic synchronization via database triggers fails.
+ */
 export const syncInterviewers = async () => {
   try {
     const { data, error } = await supabase.functions.invoke('sync-interviewers');

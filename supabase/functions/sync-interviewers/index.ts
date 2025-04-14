@@ -20,7 +20,7 @@ serve(async (req) => {
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Starting interviewer synchronization...");
+    console.log("Starting manual interviewer synchronization...");
     
     // Get all profiles with role = interviewer and approved = true
     const { data: interviewerProfiles, error: profilesError } = await supabase
@@ -34,7 +34,7 @@ serve(async (req) => {
       throw profilesError;
     }
     
-    console.log(`Found ${interviewerProfiles?.length || 0} approved interviewer profiles`);
+    console.log(`Found ${interviewerProfiles?.length || 0} approved interviewer profiles for manual sync`);
     
     if (interviewerProfiles && interviewerProfiles.length > 0) {
       // For each interviewer profile, check if they exist in interviewers table
@@ -73,7 +73,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Interviewer synchronization completed" 
+      message: "Manual interviewer synchronization completed" 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
