@@ -348,6 +348,7 @@ export type Database = {
           id: string
           interviewer_id: string | null
           position: string
+          settings: Json | null
           status: string
           updated_at: string
           user_id: string | null
@@ -360,6 +361,7 @@ export type Database = {
           id?: string
           interviewer_id?: string | null
           position: string
+          settings?: Json | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           id?: string
           interviewer_id?: string | null
           position?: string
+          settings?: Json | null
           status?: string
           updated_at?: string
           user_id?: string | null

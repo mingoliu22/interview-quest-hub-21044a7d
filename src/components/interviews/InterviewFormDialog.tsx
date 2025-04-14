@@ -104,7 +104,7 @@ export const InterviewFormDialog = ({
         notes: data.notes,
       };
 
-      // Insert new interview with proper foreign key
+      // Insert new interview with proper foreign key and settings
       const { data: interviewData, error } = await supabase
         .from('interviews')
         .insert({
@@ -114,7 +114,7 @@ export const InterviewFormDialog = ({
           position: data.position,
           date: formattedDate,
           status: 'Scheduled',
-          settings: interviewSettings,
+          settings: interviewSettings, // Directly assign the settings object
           user_id: selectedCandidate?.user_id
         })
         .select();
