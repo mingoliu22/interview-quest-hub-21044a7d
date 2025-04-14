@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,7 +89,17 @@ export const InterviewFormDialog = ({
 
       // Get candidate name from the selected candidate_id
       const selectedCandidate = candidates.find(c => c.id === data.candidate_id);
-      const candidateName = selectedCandidate ? selectedCandidate.name : "Unknown";
+      
+      if (!selectedCandidate) {
+        throw new Error("Selected candidate not found");
+      }
+      
+      const candidateName = selectedCandidate.name || "Unknown";
+      
+      if (!candidateName || candidateName === "Unknown") {
+        toast.error("Invalid candidate name");
+        return;
+      }
 
       // Interview settings to be saved as metadata
       const interviewSettings = {
@@ -104,6 +113,9 @@ export const InterviewFormDialog = ({
         notes: data.notes,
       };
 
+      console.log("Submitting interview with candidate:", selectedCandidate);
+      console.log("Candidate name:", candidateName);
+
       // Insert new interview with proper foreign key and settings
       const { data: interviewData, error } = await supabase
         .from('interviews')
@@ -114,7 +126,7 @@ export const InterviewFormDialog = ({
           position: data.position,
           date: formattedDate,
           status: 'Scheduled',
-          settings: interviewSettings, // Directly assign the settings object
+          settings: interviewSettings, 
           user_id: selectedCandidate?.user_id
         })
         .select();
