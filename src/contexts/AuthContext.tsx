@@ -5,6 +5,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType, UserRole } from "@/types/auth";
 import { toast } from "sonner";
+import { syncInterviewers } from "@/utils/syncInterviewers";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -145,6 +146,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error("Account created but profile setup failed");
       } else {
         console.log("Profile created/updated successfully for user:", authData.user.id);
+        
+        // If the user is an interviewer, trigger the sync function to create interviewer record
+        if (role === 'interviewer') {
+          console.log("Triggering interviewer sync for new interviewer:", authData.user.id);
+          try {
+            const syncResult = await syncInterviewers();
+            console.log("Interviewer sync result:", syncResult);
+          } catch (syncError) {
+            console.error("Error syncing interviewer:", syncError);
+            // Don't show error to user, it's a background process
+          }
+        }
       }
       
       navigate("/");

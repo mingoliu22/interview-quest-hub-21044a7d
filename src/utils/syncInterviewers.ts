@@ -8,16 +8,18 @@ import { toast } from "sonner";
  */
 export const syncInterviewers = async () => {
   try {
+    console.log("Syncing interviewers...");
     const { data, error } = await supabase.functions.invoke('sync-interviewers');
     
     if (error) {
       console.error("Error syncing interviewers:", error);
-      return false;
+      return { success: false, error };
     }
     
-    return true;
+    console.log("Sync interviewers result:", data);
+    return { success: true, data };
   } catch (e) {
     console.error("Exception in syncInterviewers:", e);
-    return false;
+    return { success: false, error: e };
   }
 };
