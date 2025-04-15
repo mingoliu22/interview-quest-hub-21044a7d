@@ -13,7 +13,6 @@ export const syncInterviewers = async () => {
     
     if (error) {
       console.error("Error syncing interviewers:", error);
-      toast.error("Failed to create interviewer profile");
       return { success: false, error };
     }
     
@@ -28,12 +27,10 @@ export const syncInterviewers = async () => {
       return { success: true, data };
     } else {
       console.error("Sync unsuccessful:", data);
-      toast.error("Failed to create interviewer profile");
       return { success: false, error: data };
     }
   } catch (e) {
     console.error("Exception in syncInterviewers:", e);
-    toast.error("An error occurred while creating your interviewer profile");
     return { success: false, error: e };
   }
 };

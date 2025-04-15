@@ -23,7 +23,7 @@ serve(async (req) => {
     // Get all profiles with role = interviewer and approved = true
     const { data: interviewerProfiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name")
+      .select("id, first_name, last_name, bio")
       .eq("role", "interviewer")
       .eq("approved", true);
     
@@ -50,9 +50,12 @@ serve(async (req) => {
     for (const profile of interviewerProfiles) {
       try {
         // Create a default bio if first_name and last_name are available
-        const defaultBio = profile.first_name && profile.last_name 
-          ? `${profile.first_name} ${profile.last_name}` 
-          : "New Interviewer";
+        let defaultBio = profile.bio;
+        if (!defaultBio && profile.first_name && profile.last_name) {
+          defaultBio = `${profile.first_name} ${profile.last_name}`;
+        } else if (!defaultBio) {
+          defaultBio = "New Interviewer";
+        }
         
         // Check if interviewer record already exists
         const { data: existingInterviewer, error: checkError } = await supabase
@@ -67,11 +70,21 @@ serve(async (req) => {
           continue;
         }
         
-        // For debugging - check table structure
         if (!existingInterviewer) {
           console.log(`Creating new interviewer record for profile ${profile.id}`);
           
-          // Minimal data insertion - only required fields
+          // Get the full table structure to ensure we're providing all required fields
+          const { data: tableInfo, error: tableError } = await supabase
+            .rpc('get_table_structure', { table_name: 'interviewers' });
+            
+          if (tableError) {
+            console.error("Error getting table structure:", tableError);
+            // Continue anyway with our best guess at the structure
+          } else {
+            console.log("Table structure:", tableInfo);
+          }
+          
+          // Insert with minimal required fields - only id is required in the interviewers table
           const { error: upsertError } = await supabase
             .from("interviewers")
             .insert({

@@ -142,7 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           first_name: firstName || null,
           last_name: lastName || null,
           role: role,
-          approved: autoApprove // Job seekers and interviewers are auto-approved
+          approved: autoApprove, // Job seekers and interviewers are auto-approved
+          bio: role === 'interviewer' ? `${firstName || ''} ${lastName || ''}`.trim() : null // Add bio for interviewers
         });
       
       if (profileError) {
@@ -164,14 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             if (!syncResult.success) {
               console.error("Error syncing interviewer:", syncResult.error);
+              // Don't block signup on sync error
+              toast.error("Your account was created but there was an error setting up your interviewer profile.");
             }
-          }, 500);
-          
-          // Don't block the signup flow on the sync result
-          // We'll show a success message anyway
+          }, 1000);
         } catch (syncError) {
           console.error("Exception syncing interviewer:", syncError);
           // Don't block signup on sync error
+          toast.error("Your account was created but there was an error setting up your interviewer profile.");
         }
       }
       
