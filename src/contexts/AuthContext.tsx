@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
@@ -73,9 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Only newly registered HR professionals need approval
-      // Administrators and job seekers can always log in
-      if (profileData && profileData.role === 'hr' && !profileData.approved) {
+      // Only newly registered HR professionals and admins need approval
+      // Interviewers and job seekers can always log in
+      if (profileData && (profileData.role === 'hr' || profileData.role === 'admin') && !profileData.approved) {
         toast.error("Your account requires admin approval before you can log in");
         await supabase.auth.signOut();
         return;
@@ -96,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Signing up with:", email, firstName, lastName, role, displayName);
       setLoading(true);
       
-      // Only job seekers are automatically approved
+      // Only job seekers and interviewers are automatically approved
       // HR and admin accounts need approval
-      const autoApprove = role === 'job_seeker';
+      const autoApprove = role === 'job_seeker' || role === 'interviewer';
       
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -136,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           first_name: firstName || null,
           last_name: lastName || null,
           role: role,
-          approved: autoApprove // Only job seekers are auto-approved
+          approved: autoApprove // Job seekers and interviewers are auto-approved
         });
       
       if (profileError) {

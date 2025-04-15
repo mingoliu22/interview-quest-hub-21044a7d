@@ -31,11 +31,18 @@ serve(async (req) => {
     
     if (interviewerProfiles && interviewerProfiles.length > 0) {
       for (const profile of interviewerProfiles) {
+        // Create a default bio if first_name and last_name are available
+        const defaultBio = profile.first_name && profile.last_name 
+          ? `${profile.first_name} ${profile.last_name}` 
+          : "New Interviewer";
+        
         const { error: upsertError } = await supabase
           .from("interviewers")
           .upsert({
             id: profile.id,
-            bio: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "New Interviewer"
+            bio: defaultBio.trim() || "New Interviewer",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
           
         if (upsertError) {

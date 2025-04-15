@@ -7,7 +7,7 @@ type RoleInfoProps = {
 }
 
 const RoleInfo = ({ role }: RoleInfoProps) => {
-  if (role !== "hr" && role !== "admin") {
+  if (role === "job_seeker") {
     return null;
   }
 
@@ -17,7 +17,9 @@ const RoleInfo = ({ role }: RoleInfoProps) => {
       <AlertDescription>
         {role === "admin" 
           ? "Admin accounts require approval before login is allowed." 
-          : "HR Professional accounts require approval before login is allowed."}
+          : role === "hr"
+          ? "HR Professional accounts require approval before login is allowed."
+          : "Interviewer accounts are automatically approved. After login, please complete your profile information."}
       </AlertDescription>
     </Alert>
   );

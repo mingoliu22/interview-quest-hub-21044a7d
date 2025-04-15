@@ -11,6 +11,7 @@ import NameFields from "./FormFields/NameFields";
 import EmailField from "./FormFields/EmailField";
 import PasswordField from "./FormFields/PasswordField";
 import RoleField from "./FormFields/RoleField";
+import { toast } from "sonner";
 
 export const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -39,18 +40,24 @@ const SignupForm = () => {
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
     
-    // Create a display name by combining first and last name
-    const displayName = `${values.firstName} ${values.lastName}`.trim();
-    
-    await signUp(
-      values.email, 
-      values.password, 
-      values.firstName, 
-      values.lastName, 
-      values.role as 'admin' | 'hr' | 'job_seeker',
-      displayName
-    );
-    setIsLoading(false);
+    try {
+      // Create a display name by combining first and last name
+      const displayName = `${values.firstName} ${values.lastName}`.trim();
+      
+      await signUp(
+        values.email, 
+        values.password, 
+        values.firstName, 
+        values.lastName, 
+        values.role as 'admin' | 'hr' | 'job_seeker' | 'interviewer',
+        displayName
+      );
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
