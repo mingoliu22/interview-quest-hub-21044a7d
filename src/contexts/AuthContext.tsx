@@ -152,19 +152,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Triggering interviewer sync for new interviewer:", authData.user.id);
           try {
             const syncResult = await syncInterviewers();
-            console.log("Interviewer sync result:", syncResult);
+            if (!syncResult.success) {
+              console.error("Error syncing interviewer:", syncResult.error);
+              toast.error("Account created but interviewer profile setup failed. Please contact support.");
+            } else {
+              console.log("Interviewer sync successful:", syncResult);
+            }
           } catch (syncError) {
-            console.error("Error syncing interviewer:", syncError);
-            // Don't show error to user, it's a background process
+            console.error("Exception syncing interviewer:", syncError);
+            toast.error("Account created but interviewer profile setup failed. Please try again later.");
           }
         }
       }
       
-      navigate("/");
-      
+      // Navigate to the appropriate page based on role and approval status
       if (role === 'hr' || role === 'admin') {
+        navigate("/login");
         toast.success("Account created successfully. An admin must approve your account before you can log in.");
       } else {
+        navigate("/");
         toast.success("Account created successfully. Please check your email for verification.");
       }
     } catch (error: any) {

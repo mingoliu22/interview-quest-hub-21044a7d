@@ -18,6 +18,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
+    console.log("Starting interviewer sync process");
+    
     // Get all profiles with role = interviewer and approved = true
     const { data: interviewerProfiles, error: profilesError } = await supabase
       .from("profiles")
@@ -30,10 +32,23 @@ serve(async (req) => {
       throw profilesError;
     }
     
-    if (interviewerProfiles && interviewerProfiles.length > 0) {
-      console.log(`Found ${interviewerProfiles.length} interviewer profiles to sync`);
-      
-      for (const profile of interviewerProfiles) {
+    if (!interviewerProfiles || interviewerProfiles.length === 0) {
+      console.log("No interviewer profiles found to sync");
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: "No interviewer profiles found to sync",
+        syncedCount: 0
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+    
+    console.log(`Found ${interviewerProfiles.length} interviewer profiles to sync`);
+    const syncResults = [];
+    
+    for (const profile of interviewerProfiles) {
+      try {
         // Create a default bio if first_name and last_name are available
         const defaultBio = profile.first_name && profile.last_name 
           ? `${profile.first_name} ${profile.last_name}` 
@@ -48,47 +63,38 @@ serve(async (req) => {
         
         if (checkError) {
           console.error(`Error checking existing interviewer ${profile.id}:`, checkError);
+          syncResults.push({ id: profile.id, success: false, error: checkError.message });
           continue;
         }
         
-        // Use insert or update based on whether record exists
-        if (!existingInterviewer) {
-          console.log(`Creating new interviewer record for ${profile.id}`);
-          const { error: insertError } = await supabase
-            .from("interviewers")
-            .insert({
-              id: profile.id,
-              bio: defaultBio.trim() || "New Interviewer",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+        // Use upsert to either insert or update
+        const { error: upsertError } = await supabase
+          .from("interviewers")
+          .upsert({
+            id: profile.id,
+            bio: defaultBio.trim() || "New Interviewer",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
             
-          if (insertError) {
-            console.error(`Error inserting interviewer ${profile.id}:`, insertError);
-          }
+        if (upsertError) {
+          console.error(`Error upserting interviewer ${profile.id}:`, upsertError);
+          syncResults.push({ id: profile.id, success: false, error: upsertError.message });
         } else {
-          console.log(`Updating existing interviewer record for ${profile.id}`);
-          const { error: updateError } = await supabase
-            .from("interviewers")
-            .update({
-              bio: defaultBio.trim() || "New Interviewer",
-              updated_at: new Date().toISOString()
-            })
-            .eq("id", profile.id);
-            
-          if (updateError) {
-            console.error(`Error updating interviewer ${profile.id}:`, updateError);
-          }
+          console.log(`Successfully synced interviewer ${profile.id}`);
+          syncResults.push({ id: profile.id, success: true });
         }
+      } catch (profileError) {
+        console.error(`Error processing interviewer ${profile.id}:`, profileError);
+        syncResults.push({ id: profile.id, success: false, error: String(profileError) });
       }
-    } else {
-      console.log("No interviewer profiles found to sync");
     }
     
     return new Response(JSON.stringify({ 
       success: true,
-      message: "Sync completed successfully",
-      syncedCount: interviewerProfiles?.length || 0
+      message: "Sync completed",
+      syncedCount: interviewerProfiles.length,
+      results: syncResults
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
