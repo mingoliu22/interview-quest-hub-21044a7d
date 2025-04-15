@@ -67,22 +67,28 @@ serve(async (req) => {
           continue;
         }
         
-        // Use upsert to either insert or update
-        const { error: upsertError } = await supabase
-          .from("interviewers")
-          .upsert({
-            id: profile.id,
-            bio: defaultBio.trim() || "New Interviewer",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-            
-        if (upsertError) {
-          console.error(`Error upserting interviewer ${profile.id}:`, upsertError);
-          syncResults.push({ id: profile.id, success: false, error: upsertError.message });
+        // For debugging - check table structure
+        if (!existingInterviewer) {
+          console.log(`Creating new interviewer record for profile ${profile.id}`);
+          
+          // Minimal data insertion - only required fields
+          const { error: upsertError } = await supabase
+            .from("interviewers")
+            .insert({
+              id: profile.id,
+              bio: defaultBio
+            });
+              
+          if (upsertError) {
+            console.error(`Error inserting interviewer ${profile.id}:`, upsertError);
+            syncResults.push({ id: profile.id, success: false, error: upsertError.message });
+          } else {
+            console.log(`Successfully created interviewer ${profile.id}`);
+            syncResults.push({ id: profile.id, success: true });
+          }
         } else {
-          console.log(`Successfully synced interviewer ${profile.id}`);
-          syncResults.push({ id: profile.id, success: true });
+          console.log(`Interviewer ${profile.id} already exists, skipping`);
+          syncResults.push({ id: profile.id, success: true, message: "Already exists" });
         }
       } catch (profileError) {
         console.error(`Error processing interviewer ${profile.id}:`, profileError);
@@ -93,7 +99,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       message: "Sync completed",
-      syncedCount: interviewerProfiles.length,
+      syncedCount: syncResults.filter(r => r.success).length,
       results: syncResults
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

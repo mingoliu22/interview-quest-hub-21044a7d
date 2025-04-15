@@ -99,20 +99,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       
       // Only job seekers and interviewers are automatically approved
-      // HR and admin accounts need approval
       const autoApprove = role === 'job_seeker' || role === 'interviewer';
+      
+      // Create user profile data
+      const userData = { 
+        first_name: firstName, 
+        last_name: lastName, 
+        role,
+        name: displayName // Add the displayName to auth metadata
+      };
+      
+      console.log("Creating auth user with data:", userData);
       
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { 
-            first_name: firstName, 
-            last_name: lastName, 
-            role,
-            name: displayName // Add the displayName to auth metadata
-          }
+          data: userData
         }
       });
       
@@ -146,22 +150,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error("Account created but profile setup failed");
       } else {
         console.log("Profile created/updated successfully for user:", authData.user.id);
-        
-        // If the user is an interviewer, trigger the sync function to create interviewer record
-        if (role === 'interviewer') {
-          console.log("Triggering interviewer sync for new interviewer:", authData.user.id);
-          try {
+      }
+      
+      // If the user is an interviewer, trigger the sync function to create interviewer record
+      // Only do this after the profile was created successfully
+      if (role === 'interviewer' && !profileError) {
+        console.log("Triggering interviewer sync for new interviewer:", authData.user.id);
+        try {
+          // Delay sync slightly to ensure profile creation is fully processed
+          setTimeout(async () => {
             const syncResult = await syncInterviewers();
+            console.log("Sync result:", syncResult);
+            
             if (!syncResult.success) {
               console.error("Error syncing interviewer:", syncResult.error);
-              toast.error("Account created but interviewer profile setup failed. Please contact support.");
-            } else {
-              console.log("Interviewer sync successful:", syncResult);
             }
-          } catch (syncError) {
-            console.error("Exception syncing interviewer:", syncError);
-            toast.error("Account created but interviewer profile setup failed. Please try again later.");
-          }
+          }, 500);
+          
+          // Don't block the signup flow on the sync result
+          // We'll show a success message anyway
+        } catch (syncError) {
+          console.error("Exception syncing interviewer:", syncError);
+          // Don't block signup on sync error
         }
       }
       
