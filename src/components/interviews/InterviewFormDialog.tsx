@@ -97,26 +97,33 @@ export const InterviewFormDialog = ({
         throw new Error("Selected candidate not found");
       }
       
-      // Ensure we have a valid candidate name
-      let candidateName = selectedCandidate.name || "";
+      // Generate a guaranteed non-empty candidate name using multiple fallbacks
+      let candidateName = "";
       
-      // If name is empty or undefined, try to construct it from first_name and last_name
-      if (!candidateName && (selectedCandidate.first_name || selectedCandidate.last_name)) {
+      // First try: use the name property
+      if (selectedCandidate.name && selectedCandidate.name.trim() !== "") {
+        candidateName = selectedCandidate.name;
+      } 
+      // Second try: construct from first_name and last_name
+      else if (selectedCandidate.first_name || selectedCandidate.last_name) {
         candidateName = `${selectedCandidate.first_name || ''} ${selectedCandidate.last_name || ''}`.trim();
       }
-      
-      // If still empty, use email or set to a default value
-      if (!candidateName) {
-        candidateName = selectedCandidate.email?.split('@')[0] || "Unnamed Candidate";
+      // Third try: use email username
+      else if (selectedCandidate.email) {
+        candidateName = selectedCandidate.email.split('@')[0];
       }
-      
-      // Final validation to absolutely ensure we have a non-empty candidate name
+      // Last resort: use a fixed value
+      else {
+        candidateName = "Unnamed Candidate";
+      }
+
+      // Double check to ensure we have a valid candidate name
       if (!candidateName || candidateName.trim() === "") {
         candidateName = "Unnamed Candidate";
       }
 
       console.log("Submitting interview with candidate:", selectedCandidate);
-      console.log("Candidate name:", candidateName);
+      console.log("Final candidate name to be used:", candidateName);
 
       // Interview settings to be saved as metadata
       const interviewSettings = {
@@ -135,7 +142,7 @@ export const InterviewFormDialog = ({
         .from('interviews')
         .insert({
           candidate_id: data.candidate_id,
-          candidate_name: candidateName, // This should never be empty or null now
+          candidate_name: candidateName, // Explicitly set and verified to never be empty
           interviewer_id: data.interviewer_id === 'none' ? null : data.interviewer_id,
           position: data.position,
           date: formattedDate,
@@ -145,7 +152,10 @@ export const InterviewFormDialog = ({
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting interview:", error);
+        throw error;
+      }
 
       toast.success('Interview scheduled successfully');
       form.reset();
@@ -602,4 +612,3 @@ export const InterviewFormDialog = ({
     </Dialog>
   );
 };
-

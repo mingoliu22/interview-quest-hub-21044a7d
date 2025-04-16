@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -65,7 +66,7 @@ const InterviewManagement = () => {
           const firstName = profile.first_name || '';
           const lastName = profile.last_name || '';
           const fullName = `${firstName} ${lastName}`.trim();
-          const displayName = fullName || userWithEmail?.email?.split('@')[0] || 'Unnamed';
+          const displayName = fullName || userWithEmail?.email?.split('@')[0] || 'Unnamed Candidate';
           
           allCandidates.push({
             id: profile.id,
@@ -96,7 +97,7 @@ const InterviewManagement = () => {
             
             allCandidates.push({
               id: candidate.id,
-              name: candidate.name || 'Unnamed Candidate',
+              name: candidate.name || userWithEmail?.email?.split('@')[0] || 'Unnamed Candidate',
               email: candidate.email || userWithEmail?.email || '',
               user_id: candidate.user_id,
               first_name: null,
@@ -152,8 +153,8 @@ const InterviewManagement = () => {
         if (!candidateName && candidate) {
           candidateName = candidate.name;
         }
-        if (!candidateName && interviewer) {
-          candidateName = `${interviewer.first_name || ""} ${interviewer.last_name || ""}`.trim();
+        if (!candidateName && candidate && candidate.email) {
+          candidateName = candidate.email.split('@')[0];
         }
         if (!candidateName) {
           candidateName = "Unknown Candidate";
@@ -175,8 +176,19 @@ const InterviewManagement = () => {
         };
       });
 
+      // Safe check to ensure no interview has null candidate_name
+      const validatedInterviews = formattedInterviews.map(interview => {
+        if (!interview.candidate_name || interview.candidate_name.trim() === '') {
+          return {
+            ...interview,
+            candidate_name: "Unnamed Candidate"
+          };
+        }
+        return interview;
+      });
+
       setJobs(jobsData || []);
-      setInterviews(formattedInterviews);
+      setInterviews(validatedInterviews);
       
       // Ensure all candidates have valid names
       const validatedCandidates = allCandidates.map(candidate => {
@@ -190,7 +202,6 @@ const InterviewManagement = () => {
       });
 
       setCandidates(validatedCandidates);
-
       setExams(examsData || []);
       
       await syncCandidatesWithProfiles(validatedCandidates, usersWithEmails);
@@ -211,7 +222,7 @@ const InterviewManagement = () => {
           // Check if this job seeker exists in candidates table
           const { data: existingCandidate } = await supabase
             .from('candidates')
-            .select('id, user_id')
+            .select('id, user_id, name')
             .eq('user_id', user.id)
             .maybeSingle();
           
@@ -226,6 +237,16 @@ const InterviewManagement = () => {
               status: 'Active'
             });
             console.log(`Created candidate record for job seeker: ${displayName}`);
+          } 
+          // Update candidate with empty name
+          else if (!existingCandidate.name || existingCandidate.name.trim() === '') {
+            const displayName = user.display_name || user.email?.split('@')[0] || "Unnamed Candidate";
+            
+            await supabase.from('candidates')
+              .update({ name: displayName })
+              .eq('id', existingCandidate.id);
+              
+            console.log(`Updated candidate name for job seeker: ${displayName}`);
           }
         }
       }
