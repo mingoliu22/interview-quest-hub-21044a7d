@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,40 +89,19 @@ export const InterviewFormDialog = ({
       // Format date for Supabase
       const formattedDate = data.date.toISOString();
 
-      // Get candidate name from the selected candidate_id
+      // Get candidate name from the selected candidate_id with multiple fallback strategies
       const selectedCandidate = candidates.find(c => c.id === data.candidate_id);
       
-      if (!selectedCandidate) {
-        throw new Error("Selected candidate not found");
-      }
-      
-      // Generate a guaranteed non-empty candidate name using multiple fallbacks
-      let candidateName = "";
-      
-      // First try: use the name property
-      if (selectedCandidate.name && selectedCandidate.name.trim() !== "") {
-        candidateName = selectedCandidate.name;
-      } 
-      // Second try: construct from first_name and last_name
-      else if (selectedCandidate.first_name || selectedCandidate.last_name) {
-        candidateName = `${selectedCandidate.first_name || ''} ${selectedCandidate.last_name || ''}`.trim();
-      }
-      // Third try: use email username
-      else if (selectedCandidate.email) {
-        candidateName = selectedCandidate.email.split('@')[0];
-      }
-      // Last resort: use a fixed value
-      else {
-        candidateName = "Unnamed Candidate";
-      }
+      let candidateName = selectedCandidate ? 
+        (
+          selectedCandidate.name || 
+          `${selectedCandidate.first_name || ''} ${selectedCandidate.last_name || ''}`.trim() || 
+          selectedCandidate.email?.split('@')[0] || 
+          'Unnamed Candidate'
+        ) : 'Unnamed Candidate';
 
-      // Double check to ensure we have a valid candidate name
-      if (!candidateName || candidateName.trim() === "") {
-        candidateName = "Unnamed Candidate";
-      }
-
-      console.log("Submitting interview with candidate:", selectedCandidate);
-      console.log("Final candidate name to be used:", candidateName);
+      // Trim and validate candidateName
+      candidateName = candidateName.trim() || 'Unnamed Candidate';
 
       // Interview settings to be saved as metadata
       const interviewSettings = {
@@ -142,7 +120,7 @@ export const InterviewFormDialog = ({
         .from('interviews')
         .insert({
           candidate_id: data.candidate_id,
-          candidate_name: candidateName, // Explicitly set and verified to never be empty
+          candidate_name: candidateName, // Now can be NULL, but we provide a default
           interviewer_id: data.interviewer_id === 'none' ? null : data.interviewer_id,
           position: data.position,
           date: formattedDate,

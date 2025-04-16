@@ -130,43 +130,43 @@ export type Database = {
       }
       candidates: {
         Row: {
-          applied_date: string | null
+          applied_date: string
           avatar_url: string | null
-          created_at: string | null
+          created_at: string
           email: string
           id: string
           name: string
           position: string | null
           status: string
           tags: string | null
-          updated_at: string | null
-          user_id: string | null
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          applied_date?: string | null
+          applied_date?: string
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           email: string
           id?: string
           name: string
           position?: string | null
           status: string
           tags?: string | null
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          applied_date?: string | null
+          applied_date?: string
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           email?: string
           id?: string
           name?: string
           position?: string | null
           status?: string
           tags?: string | null
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -341,43 +341,43 @@ export type Database = {
       }
       interviews: {
         Row: {
-          candidate_id: string | null
-          candidate_name: string
+          candidate_id: string
+          candidate_name: string | null
           created_at: string
           date: string
           id: string
-          interviewer_id: string | null
+          interviewer_id: string
           position: string
-          settings: Json | null
+          settings: Json
           status: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
-          candidate_id?: string | null
-          candidate_name: string
+          candidate_id: string
+          candidate_name?: string | null
           created_at?: string
           date: string
           id?: string
-          interviewer_id?: string | null
+          interviewer_id: string
           position: string
-          settings?: Json | null
+          settings?: Json
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
-          candidate_id?: string | null
-          candidate_name?: string
+          candidate_id?: string
+          candidate_name?: string | null
           created_at?: string
           date?: string
           id?: string
-          interviewer_id?: string | null
+          interviewer_id?: string
           position?: string
-          settings?: Json | null
+          settings?: Json
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
