@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,8 @@ interface InterviewFormDialogProps {
     name: string;
     email: string;
     user_id?: string;
+    first_name?: string | null;
+    last_name?: string | null;
   }>;
   interviewers: Array<{
     id: string;
