@@ -61,9 +61,15 @@ const InterviewManagement = () => {
           // Find the email for this user from the users data
           const userWithEmail = usersWithEmails.find(u => u.id === profile.id);
           
+          // Ensure we have a valid name
+          const firstName = profile.first_name || '';
+          const lastName = profile.last_name || '';
+          const fullName = `${firstName} ${lastName}`.trim();
+          const displayName = fullName || userWithEmail?.email?.split('@')[0] || 'Unnamed';
+          
           allCandidates.push({
             id: profile.id,
-            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unnamed',
+            name: displayName,
             email: userWithEmail?.email || '',
             user_id: profile.id,
             first_name: profile.first_name,
@@ -171,11 +177,23 @@ const InterviewManagement = () => {
 
       setJobs(jobsData || []);
       setInterviews(formattedInterviews);
-      setCandidates(allCandidates);
+      
+      // Ensure all candidates have valid names
+      const validatedCandidates = allCandidates.map(candidate => {
+        if (!candidate.name || candidate.name.trim() === '') {
+          return {
+            ...candidate,
+            name: candidate.email?.split('@')[0] || 'Unnamed Candidate'
+          };
+        }
+        return candidate;
+      });
+
+      setCandidates(validatedCandidates);
+
       setExams(examsData || []);
       
-      // Synchronize candidates with job seeker profiles automatically
-      await syncCandidatesWithProfiles(allCandidates, usersWithEmails);
+      await syncCandidatesWithProfiles(validatedCandidates, usersWithEmails);
       
     } catch (error: any) {
       console.error("Error fetching data:", error);
@@ -225,13 +243,22 @@ const InterviewManagement = () => {
 
   // Create a formatted candidates array with combined name property for InterviewFormDialog
   const formattedCandidates = candidates.map(candidate => {
-    const fullName = candidate.first_name || candidate.last_name ? 
-      `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim() : 
-      candidate.name;
+    // Ensure we have a valid name
+    let fullName = candidate.name;
+    
+    // If name is missing but we have first/last name, use those
+    if ((!fullName || fullName.trim() === '') && (candidate.first_name || candidate.last_name)) {
+      fullName = `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim();
+    }
+    
+    // If still no name, use part of email or default
+    if (!fullName || fullName.trim() === '') {
+      fullName = candidate.email?.split('@')[0] || "Unnamed Candidate";
+    }
       
     return {
       id: candidate.id,
-      name: fullName || candidate.email || "Unnamed Candidate",
+      name: fullName,
       email: candidate.email,
       user_id: candidate.user_id,
       first_name: candidate.first_name,

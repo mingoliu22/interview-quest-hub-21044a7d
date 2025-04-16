@@ -100,20 +100,19 @@ export const InterviewFormDialog = ({
       // Ensure we have a valid candidate name
       let candidateName = selectedCandidate.name || "";
       
-      // If name is empty, try to construct it from first_name and last_name
-      if (!candidateName && selectedCandidate.first_name) {
+      // If name is empty or undefined, try to construct it from first_name and last_name
+      if (!candidateName && (selectedCandidate.first_name || selectedCandidate.last_name)) {
         candidateName = `${selectedCandidate.first_name || ''} ${selectedCandidate.last_name || ''}`.trim();
       }
       
-      // If still empty, use email or set to "Unknown"
+      // If still empty, use email or set to a default value
       if (!candidateName) {
-        candidateName = selectedCandidate.email || "Unknown";
+        candidateName = selectedCandidate.email?.split('@')[0] || "Unnamed Candidate";
       }
       
-      // Final validation
-      if (!candidateName || candidateName === "") {
-        toast.error("Invalid candidate name");
-        return;
+      // Final validation to absolutely ensure we have a non-empty candidate name
+      if (!candidateName || candidateName.trim() === "") {
+        candidateName = "Unnamed Candidate";
       }
 
       console.log("Submitting interview with candidate:", selectedCandidate);
@@ -136,7 +135,7 @@ export const InterviewFormDialog = ({
         .from('interviews')
         .insert({
           candidate_id: data.candidate_id,
-          candidate_name: candidateName,
+          candidate_name: candidateName, // This should never be empty or null now
           interviewer_id: data.interviewer_id === 'none' ? null : data.interviewer_id,
           position: data.position,
           date: formattedDate,
@@ -603,3 +602,4 @@ export const InterviewFormDialog = ({
     </Dialog>
   );
 };
+
