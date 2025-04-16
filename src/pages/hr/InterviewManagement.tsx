@@ -91,7 +91,7 @@ const InterviewManagement = () => {
             
             allCandidates.push({
               id: candidate.id,
-              name: candidate.name,
+              name: candidate.name || 'Unnamed Candidate',
               email: candidate.email || userWithEmail?.email || '',
               user_id: candidate.user_id,
               first_name: null,
@@ -115,13 +115,14 @@ const InterviewManagement = () => {
         const formattedInterviewers: Interviewer[] = (interviewerProfiles || []).map(profile => {
           // Find the email for this user from the users data
           const userWithEmail = usersWithEmails.find(u => u.id === profile.id);
+          const displayName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           
           return {
             id: profile.id,
             first_name: profile.first_name,
             last_name: profile.last_name,
             email: userWithEmail?.email || "",
-            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Unnamed Interviewer"
+            name: displayName || "Unnamed Interviewer"
           };
         });
         setInterviewers(formattedInterviewers);
@@ -141,11 +142,23 @@ const InterviewManagement = () => {
         // Find interviewer based on interviewer_id instead of trying to use a join
         const interviewer = interviewerProfiles?.find(p => p.id === interview.interviewer_id);
         
+        // Ensure we have a valid candidate_name
+        let candidateName = interview.candidate_name;
+        if (!candidateName && candidate) {
+          candidateName = candidate.name;
+        }
+        if (!candidateName && interviewer) {
+          candidateName = `${interviewer.first_name || ""} ${interviewer.last_name || ""}`.trim();
+        }
+        if (!candidateName) {
+          candidateName = "Unknown Candidate";
+        }
+        
         return {
           id: interview.id,
           date: interview.date,
           candidate_id: candidate?.id || "",
-          candidate_name: candidate?.name || interview.candidate_name || "Unknown",
+          candidate_name: candidateName,
           interviewer_id: interviewer?.id || null,
           interviewer_name: interviewer ? 
             `${interviewer.first_name || ""} ${interviewer.last_name || ""}`.trim() || "Unnamed Interviewer" : 
@@ -186,14 +199,16 @@ const InterviewManagement = () => {
             .maybeSingle();
           
           if (!existingCandidate) {
-            // Create a candidate record for this job seeker
+            // Create a candidate record for this job seeker with a valid name
+            const displayName = user.display_name || user.email?.split('@')[0] || "Unnamed Candidate";
+            
             await supabase.from('candidates').insert({
-              name: user.display_name,
+              name: displayName,
               email: user.email,
               user_id: user.id,
               status: 'Active'
             });
-            console.log(`Created candidate record for job seeker: ${user.display_name}`);
+            console.log(`Created candidate record for job seeker: ${displayName}`);
           }
         }
       }
@@ -217,7 +232,7 @@ const InterviewManagement = () => {
       
     return {
       id: candidate.id,
-      name: fullName || candidate.email,
+      name: fullName || candidate.email || "Unnamed Candidate",
       email: candidate.email,
       user_id: candidate.user_id,
       first_name: candidate.first_name,

@@ -94,12 +94,27 @@ export const InterviewFormDialog = ({
         throw new Error("Selected candidate not found");
       }
       
-      const candidateName = selectedCandidate.name || "Unknown";
+      // Ensure we have a valid candidate name
+      let candidateName = selectedCandidate.name || "";
       
-      if (!candidateName || candidateName === "Unknown") {
+      // If name is empty, try to construct it from first_name and last_name
+      if (!candidateName && selectedCandidate.first_name) {
+        candidateName = `${selectedCandidate.first_name || ''} ${selectedCandidate.last_name || ''}`.trim();
+      }
+      
+      // If still empty, use email or set to "Unknown"
+      if (!candidateName) {
+        candidateName = selectedCandidate.email || "Unknown";
+      }
+      
+      // Final validation
+      if (!candidateName || candidateName === "") {
         toast.error("Invalid candidate name");
         return;
       }
+
+      console.log("Submitting interview with candidate:", selectedCandidate);
+      console.log("Candidate name:", candidateName);
 
       // Interview settings to be saved as metadata
       const interviewSettings = {
@@ -112,9 +127,6 @@ export const InterviewFormDialog = ({
         lighting: data.lighting,
         notes: data.notes,
       };
-
-      console.log("Submitting interview with candidate:", selectedCandidate);
-      console.log("Candidate name:", candidateName);
 
       // Insert new interview with proper foreign key and settings
       const { data: interviewData, error } = await supabase
@@ -340,6 +352,7 @@ export const InterviewFormDialog = ({
                   </Button>
                 </div>
               </TabsContent>
+              
               
               <TabsContent value="tests" className="space-y-4">
                 <FormField
