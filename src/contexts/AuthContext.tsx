@@ -135,16 +135,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth signup successful:", authData.user.id);
       
       // Manually create/update the profile
+      const profileData = {
+        id: authData.user.id,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        role: role,
+        approved: autoApprove, // Job seekers and interviewers are auto-approved
+        bio: role === 'interviewer' ? `${firstName || ''} ${lastName || ''}`.trim() : null // Add bio for interviewers
+      };
+      
       const { error: profileError } = await supabase
         .from("profiles")
-        .upsert({
-          id: authData.user.id,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          role: role,
-          approved: autoApprove, // Job seekers and interviewers are auto-approved
-          bio: role === 'interviewer' ? `${firstName || ''} ${lastName || ''}`.trim() : null // Add bio for interviewers
-        });
+        .upsert(profileData);
       
       if (profileError) {
         console.error("Error updating profile:", profileError);
@@ -154,7 +156,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // If the user is an interviewer, trigger the sync function to create interviewer record
-      // Only do this after the profile was created successfully
       if (role === 'interviewer' && !profileError) {
         console.log("Triggering interviewer sync for new interviewer:", authData.user.id);
         try {

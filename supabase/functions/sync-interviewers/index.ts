@@ -73,17 +73,6 @@ serve(async (req) => {
         if (!existingInterviewer) {
           console.log(`Creating new interviewer record for profile ${profile.id}`);
           
-          // Get the full table structure to ensure we're providing all required fields
-          const { data: tableInfo, error: tableError } = await supabase
-            .rpc('get_table_structure', { table_name: 'interviewers' });
-            
-          if (tableError) {
-            console.error("Error getting table structure:", tableError);
-            // Continue anyway with our best guess at the structure
-          } else {
-            console.log("Table structure:", tableInfo);
-          }
-          
           // Insert with minimal required fields - only id is required in the interviewers table
           const { error: upsertError } = await supabase
             .from("interviewers")
